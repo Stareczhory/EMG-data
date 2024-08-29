@@ -25,6 +25,7 @@ while(1):
         umyo_parser.umyo_parse_preprocessor(data)
         # .plot_prepare saves FTT processed emg data into 4 frequency-domain bins in plot_spg[][]
         display_stuff.plot_prepare(umyo_parser.umyo_get_list())
-        # for-loop to iterate over the bin data
+        # for-loop to iterate over the individual bin data
         for index, bin_values in enumerate(display_stuff.plot_spg[0]):
             print(f"Bin {index+1} is {bin_values}")
+
