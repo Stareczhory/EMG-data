@@ -8,14 +8,26 @@ max_devices = 64
 size = width, height = 1200, 500
 screen = pygame.display.set_mode(size)
 
+# Arrays:
+# all of them are not a single array, but a collection of arrays for different devices,
+# thus plot_spg[0] is an array containing data for device 0,
+# plot_spg[1] is an array containing data for device 1 etc
+
+# Raw EMG values are pushed into an array plot_emg so it always contains an ordered data snapshot,
+# with the oldest value at plot_emg[0][0] and the most recent one at plot_emg[0][plot_len-1]
+# there are 8 EMG data points in each radio packet, so with each packet,
+# 8 data points are added to corresponding EMG array
+
 plot_len = 2000
 spg_len = 200
-plot_emg = []
+plot_emg = []  # raw emg values
+# spectrogram calculated on the device side, 4 bins
+# split into ~60hz segments
 plot_spg = []
-plot_ax = []
-plot_ay = []
-plot_az = []
-plot_Q = []
+plot_ax = []  # acceleration
+plot_ay = []  # acceleration
+plot_az = []  # acceleration
+plot_Q = []  # orientation quaternion
 dev_rssi = [0]*max_devices
 dev_batt = [0]*max_devices
 dev_mag_angle = [0]*max_devices
@@ -62,11 +74,11 @@ def plot_cycle_lines():
         for x in range(plot_len):
             xy.append([DX+x*x_scale, DY+(plot_emg[d][x]-y_zero[d])*y_scale[d]])
         cl = num_to_color(d)
-        
+
         pygame.draw.lines(screen, cl, False, xy)
 #    screen.blit(ball, ballrect)
     screen.unlock()
-    pygame.display.flip()        
+    pygame.display.flip()
     active_devices = cur_devices
     return active_devices
 
@@ -84,7 +96,7 @@ def val_to_color(val):
         g = 0;
         b = int(val/tb*255);
         return r,g,b
-        
+
     if(val < tg):
         r = 0;
         b = int((tg-val-tb)/wg*255);
@@ -106,7 +118,7 @@ def val_to_color(val):
     if(b > 255): b = 255;
     return r,g,b
 
-
+# function plot_cycle_spg() performs drawing, can trace which arrays it uses
 def plot_cycle_spg():
     global plot_spg, max_devices, last_data_id, spg_len, active_devices
     for event in pygame.event.get():
@@ -132,13 +144,13 @@ def plot_cycle_spg():
                 cl = val_to_color(val)
                 screen.fill(cl,(bx,by,rw,rh))
                 xy = []
-        
+
         pygame.draw.lines(screen, cl, False, xy)
 
-        
+
 #    screen.blit(ball, ballrect)
     screen.unlock()
-    pygame.display.flip()        
+    pygame.display.flip()
     active_devices = cur_devices
     return active_devices
 
@@ -174,7 +186,7 @@ def plot_cycle_tester():
             ax = plot_ax[d][x] / 8129 * YS + YS*4
             xy.append([DX+x*x_scale, DY*1.2+ax])
 
-        cl = 255,0,0 #num_to_color(d)        
+        cl = 255,0,0 #num_to_color(d)
         pygame.draw.lines(screen, cl, False, xy)
 
         xy = []
@@ -182,7 +194,7 @@ def plot_cycle_tester():
             ay = plot_ay[d][x] / 8129 * YS + YS*4
             xy.append([DX+x*x_scale, DY*1.2+ay])
 
-        cl = (255,255,0) #num_to_color(d)        
+        cl = (255,255,0) #num_to_color(d)
         pygame.draw.lines(screen, cl, False, xy)
 
         xy = []
@@ -190,7 +202,7 @@ def plot_cycle_tester():
             az = plot_az[d][x] / 8129 * YS + YS*4
             xy.append([DX+x*x_scale, DY*1.2+az])
 
-        cl = (0,0,255) #num_to_color(d)        
+        cl = (0,0,255) #num_to_color(d)
         pygame.draw.lines(screen, cl, False, xy)
 
         xy = []
@@ -205,9 +217,9 @@ def plot_cycle_tester():
         pygame.draw.lines(screen, cl, False, xy)
 
         DX = 10
-        
 
-#RSSI drawing        
+
+#RSSI drawing
         xy = []
         xy.append([DX + width*0.05, DY - 30])
         xy.append([DX + width*0.35, DY - 30])
@@ -216,7 +228,7 @@ def plot_cycle_tester():
         xy.append([DX + width*0.05, DY - 30])
         cl = 255,255,255
         pygame.draw.lines(screen, cl, False, xy)
-        
+
         sig_level = 0
         if(dev_rssi[d] > 1):
             sig_level = (90 - dev_rssi[d])*1.6 #reasonable 0-100 scale
@@ -226,11 +238,11 @@ def plot_cycle_tester():
         if(sig_level > 30): cl = 200,100,0
         if(sig_level > 55): cl = 0,100,150
         if(sig_level > 80): cl = 0,200,0
-        
+
         x_sz = sig_level*0.01 * width*0.3 - 2
         screen.fill(cl,(DX + width*0.05+1,DY - 29,x_sz,23))
 
-#Compass drawing        
+#Compass drawing
         mag_angle = 3.1415 - dev_mag_angle[d]
         compass_R = YS*2
         compass_D = 0.1 * compass_R
@@ -259,7 +271,7 @@ def plot_cycle_tester():
         cl = 255,0,0
         pygame.draw.lines(screen, cl, False, xy)
 
-#IMU drawing        
+#IMU drawing
         imu_S = YS
         imu_cx = DX + width*0.9
         imu_cy = DY + imu_S
@@ -285,8 +297,8 @@ def plot_cycle_tester():
         xy.append([S_x, S_y])
         cl = 255,0,0
         pygame.draw.lines(screen, cl, False, xy)
-        
-#Battery drawing        
+
+#Battery drawing
         batt_perc = (dev_batt[d] - 3100)/10
         if(batt_perc < 0): batt_perc = 0
         batt_dx = DX + width*0.95
@@ -309,16 +321,17 @@ def plot_cycle_tester():
         batt_fh = batt_h * batt_perc / 100 - 1
         if(batt_fh < 2): batt_fh = 2
         screen.fill(cl,(batt_dx+1,batt_dy + batt_h - batt_fh - 1, batt_w - 2, batt_fh))
-        
-        
-        
-            
+
+
+
+
 #    screen.blit(ball, ballrect)
     screen.unlock()
-    pygame.display.flip()        
+    pygame.display.flip()
     active_devices = cur_devices
     return active_devices
 
+# data entry point
 def plot_prepare(devices):
     global plot_emg, plot_spg, max_devices, last_data_id, y_zero, active_devices
     for i in range(max_devices): not_updated_cnt[i] += 1
@@ -333,7 +346,7 @@ def plot_prepare(devices):
                 val = devices[d].data_array[x]
                 plot_emg[d].append(val)
                 y_zero[d] = 0.997*y_zero[d] + 0.003*val
-            
+
             plot_ax[d].append(devices[d].ax)
             plot_ay[d].append(devices[d].ay)
             plot_az[d].append(devices[d].az)
@@ -341,7 +354,7 @@ def plot_prepare(devices):
             plot_Q[d].append(devices[d].Qsg[1])
             plot_Q[d].append(devices[d].Qsg[2])
             plot_Q[d].append(devices[d].Qsg[3])
-            
+
         last_data_id[d] = devices[d].data_id
         if(hasattr(devices[d], 'rssi')):
             dev_rssi[d] = devices[d].rssi

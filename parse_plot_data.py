@@ -3,7 +3,9 @@
 import umyo_parser
 
 import numpy as np
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+
 
 plot_ys = [0]*1000
 
