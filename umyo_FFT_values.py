@@ -2,7 +2,18 @@ import csv
 import datetime
 import display_stuff
 import umyo_parser
+from collections import deque
 
+buffer_size = 500
+full_data_stream = deque(maxlen=buffer_size)
+filename = 'csv_data.csv'
+
+def save_data_to_csv(data_deque, filename):
+    with open(filename, 'w', newline='') as csvfile:
+        csv_write = csv.writer(csvfile)
+        for row in data_deque:
+            csv_write.writerow(row)
+        data_deque.clear()
 # list
 from serial.tools import list_ports
 port = list(list_ports.comports())
@@ -30,6 +41,7 @@ try:
             umyo_parser.umyo_parse_preprocessor(data)
             # .plot_prepare saves FTT processed emg data into 4 frequency-domain bins in plot_spg[][]
             display_stuff.plot_prepare(umyo_parser.umyo_get_list())
+            first_data_stream = []
             # there is some delay with the sensor so,
             # an if statement to check if it doesn't contain 800
             # buffer zeros
@@ -37,8 +49,16 @@ try:
                 # for-loop to iterate over the individual bin data values
                 for index, bin_value in enumerate(display_stuff.plot_spg[0]):
                     # print(f"Bin {index} is {bin_value}")
-                    current_time = datetime.datetime.now()
+                    first_data_stream.append(bin_value)
+                current_time = datetime.datetime.now()
+                first_data_stream.append(current_time)
+                full_data_stream.append(first_data_stream)
+                # check if buffer is full and write to csv if it is
+                if len(full_data_stream) >= buffer_size:
+                    save_data_to_csv(full_data_stream, filename)
 except KeyboardInterrupt:
     # Handle graceful shutdown on user interruption (Ctrl+C)
     print("Data stream interrupted by user. Saving remaining data...")
+    if full_data_stream:
+        save_data_to_csv(full_data_stream, filename)
 
