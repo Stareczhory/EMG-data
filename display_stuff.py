@@ -2,7 +2,7 @@
 
 import sys, pygame
 from math import *
-pygame.init()
+# pygame.init()
 
 max_devices = 64
 size = width, height = 1200, 500
@@ -342,6 +342,7 @@ def plot_prepare(devices):
             not_updated_cnt[d] = 0
             for n in range(4):
                 plot_spg[d].append(devices[d].device_spectr[n])
+
             for x in range(devices[d].data_count):
                 val = devices[d].data_array[x]
                 plot_emg[d].append(val)
@@ -364,7 +365,7 @@ def plot_prepare(devices):
             dev_batt[d] = devices[d].batt
         if(len(plot_emg[d]) < 2): return
         plot_emg[d] = plot_emg[d][-plot_len:]
-        plot_spg[d] = plot_spg[d][-spg_len*4:]
+        plot_spg[d] = plot_spg[d][-4:]  # return last 4 values
         plot_ax[d] = plot_ax[d][-spg_len:]
         plot_ay[d] = plot_ay[d][-spg_len:]
         plot_az[d] = plot_az[d][-spg_len:]
