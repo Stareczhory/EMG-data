@@ -9,7 +9,7 @@ full_data_stream = deque(maxlen=buffer_size)
 filename = 'csv_data.csv'
 
 def save_data_to_csv(data_deque, filename):
-    with open(filename, 'w', newline='') as csvfile:
+    with open(filename, 'a', newline='') as csvfile:
         csv_write = csv.writer(csvfile)
         for row in data_deque:
             csv_write.writerow(row)
@@ -36,15 +36,15 @@ try:
         # collecting data from sensors
         cnt = ser.in_waiting
         if(cnt > 0):
+            first_data_stream = []
             data = ser.read(cnt)
             # data is read from device, processed, and saved into umyo_get_list
             umyo_parser.umyo_parse_preprocessor(data)
             # .plot_prepare saves FTT processed emg data into 4 frequency-domain bins in plot_spg[][]
             display_stuff.plot_prepare(umyo_parser.umyo_get_list())
-            first_data_stream = []
-            # there is some delay with the sensor so,
-            # an if statement to check if it doesn't contain 800
-            # buffer zeros
+            # plot_spg is a fixed sized buffer of 800 values,
+            # which is initialized to 800 zeros. - needs a change
+            # after getting packets buffer is resized.
             if len(display_stuff.plot_spg[0]) < 5:
                 # for-loop to iterate over the individual bin data values
                 for index, bin_value in enumerate(display_stuff.plot_spg[0]):

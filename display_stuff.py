@@ -340,36 +340,18 @@ def plot_prepare(devices):
     for d in range(cnt):
         if(devices[d].data_id != last_data_id[d]):
             not_updated_cnt[d] = 0
+            # updates plot_spg[d] with the latest processed EMG data
+            # when packet id is different
             for n in range(4):
                 plot_spg[d].append(devices[d].device_spectr[n])
-
+            plot_spg[d] = plot_spg[d][-4:]
+            # not using code below, contains 8 raw data values
             for x in range(devices[d].data_count):
                 val = devices[d].data_array[x]
                 plot_emg[d].append(val)
-                y_zero[d] = 0.997*y_zero[d] + 0.003*val
-
-            plot_ax[d].append(devices[d].ax)
-            plot_ay[d].append(devices[d].ay)
-            plot_az[d].append(devices[d].az)
-            plot_Q[d].append(devices[d].Qsg[0])
-            plot_Q[d].append(devices[d].Qsg[1])
-            plot_Q[d].append(devices[d].Qsg[2])
-            plot_Q[d].append(devices[d].Qsg[3])
-
         last_data_id[d] = devices[d].data_id
-        if(hasattr(devices[d], 'rssi')):
-            dev_rssi[d] = devices[d].rssi
-        if(hasattr(devices[d], 'mag_angle')):
-            dev_mag_angle[d] = devices[d].mag_angle
-        if(hasattr(devices[d], 'batt')):
-            dev_batt[d] = devices[d].batt
         if(len(plot_emg[d]) < 2): return
         plot_emg[d] = plot_emg[d][-plot_len:]
-        plot_spg[d] = plot_spg[d][-4:]  # return last 4 values
-        plot_ax[d] = plot_ax[d][-spg_len:]
-        plot_ay[d] = plot_ay[d][-spg_len:]
-        plot_az[d] = plot_az[d][-spg_len:]
-        plot_Q[d] = plot_Q[d][-spg_len*4:]
-#    print(plot_emg[0])
+
     return devices[0].data_id
 
