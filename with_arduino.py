@@ -1,7 +1,8 @@
 import serial
 import datetime
 
-def readserial(comport, baudrate):
+
+def read_serial(comport, baudrate):
     ser = serial.Serial(comport, baudrate, timeout=0.01)
 
     while True:
@@ -11,4 +12,4 @@ def readserial(comport, baudrate):
             print(data, current_time)
 
 
-readserial('COM4', 9600)
+read_serial('COM4', 9600)

@@ -46,7 +46,6 @@ def save_data_to_csv(data_deque, filename):
         for row in data_deque:
             flattened_row = [item for sublist in row for item in sublist]
             csv_write.writerow(flattened_row)
-            # print(f"flattened_row: {flattened_row}")
         data_deque.clear()
 
 
@@ -68,7 +67,9 @@ ser = serial.Serial(port=device, baudrate=921600, parity=serial.PARITY_NONE, sto
 print("conn: " + ser.portstr)
 
 # main loop
-init()
+
+init()  # Initialize the lists
+
 try:
     while (1):
         # collecting data from sensors
