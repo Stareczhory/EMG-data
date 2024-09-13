@@ -2,6 +2,7 @@ import csv
 import datetime
 import umyo_parser
 from collections import deque
+import copy
 
 buffer_size = 500
 full_data_stream = deque(maxlen=buffer_size)
@@ -9,12 +10,17 @@ filename = 'csv_data.csv'
 num_of_devices = 3
 last_data_id = []
 data_spg = []
-ordered_data_stream = []
-counter = []
+ordered_data_stream = [[0] * 4] * num_of_devices
+counter = [0] * num_of_devices
+
 # initializes the data lists based on the number of devices
-for i in range(num_of_devices):
-    data_spg.append([0] * 5)
-    last_data_id.append([0])
+
+
+def init():
+    global last_data_id, data_spg, num_of_devices
+    for i in range(num_of_devices):
+        data_spg.append([0] * 5)
+        last_data_id.append([0])
 
 
 def handle_data(devices):
@@ -40,6 +46,7 @@ def save_data_to_csv(data_deque, filename):
         for row in data_deque:
             flattened_row = [item for sublist in row for item in sublist]
             csv_write.writerow(flattened_row)
+            # print(f"flattened_row: {flattened_row}")
         data_deque.clear()
 
 
@@ -61,6 +68,7 @@ ser = serial.Serial(port=device, baudrate=921600, parity=serial.PARITY_NONE, sto
 print("conn: " + ser.portstr)
 
 # main loop
+init()
 try:
     while (1):
         # collecting data from sensors
@@ -74,23 +82,26 @@ try:
             # handle_data checks from which sensor the packet was received from,
             # and saves the data.
             handle_data(umyo_parser.umyo_get_list())
-            for index, d in enumerate(data_spg):
-                if len(d) < 5:
+            for index, data_list in enumerate(data_spg):
+                if len(data_list) < 5:
                     if counter[index] == 1:
-                        ordered_data_stream[index] = d
+                        ordered_data_stream[index] = data_list
                     else:
-                        ordered_data_stream[index] = d
+                        ordered_data_stream[index] = data_list
                         counter[index] = 1
 
             sum_counter = 0
             for n in counter:
                 sum_counter += n
-            if sum_counter == 3:
+            if sum_counter == num_of_devices:
                 counter.clear()
-                current_time = datetime.datetime.now()
-                ordered_data_stream.append(current_time)
-                full_data_stream.append(ordered_data_stream)
+                counter = [0] * num_of_devices
+                time_obj = datetime.datetime.now()
+                time_list = [time_obj.hour, time_obj.minute, time_obj.second, time_obj.microsecond]
+                ordered_data_stream.append(time_list)
+                full_data_stream.append(copy.deepcopy(ordered_data_stream))
                 ordered_data_stream.clear()
+                ordered_data_stream = [[0] * 4] * num_of_devices
                 if len(full_data_stream) >= buffer_size:
                     save_data_to_csv(full_data_stream, filename)
 except KeyboardInterrupt:
