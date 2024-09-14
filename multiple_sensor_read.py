@@ -14,6 +14,7 @@ data_spg = []
 ordered_data_stream = [[0] * 4] * num_of_devices
 counter = [0] * num_of_devices
 
+
 # initializes the data lists based on the number of devices
 
 
@@ -37,7 +38,6 @@ def handle_data(devices):
             data_spg[d] = data_spg[d][-4:]
         else:
             data_spg[d] = [0]*5
-
         last_data_id[d] = devices[d].data_id
 
 
@@ -45,8 +45,8 @@ def save_data_to_csv(data_deque, filename):
     with open(filename, 'w', newline='') as csvfile:
         csv_write = csv.writer(csvfile)
         for row in data_deque:
-            # flattened_row = [item for sublist in row for item in sublist]
-            csv_write.writerow(row)
+            flattened_row = [item for sublist in row for item in sublist]
+            csv_write.writerow(flattened_row)
         data_deque.clear()
 
 
@@ -89,17 +89,13 @@ try:
                     ordered_data_stream[index] = data_list
                     counter[index] = 1
             if sum(counter) < num_of_devices:
-                continue
+                continue  # continue getting packets until values from all sensors are obtained
             else:
-                counter.clear()
                 counter = [0] * num_of_devices
                 time_obj = datetime.datetime.now()
                 time_list = [time_obj.hour, time_obj.minute, time_obj.second, time_obj.microsecond]
                 ordered_data_stream.append(time_list)
-                two_dimensional_list = np.array(ordered_data_stream)
-                flattened_ordered_data_stream = two_dimensional_list.flatten()
-                full_data_stream.append(copy.deepcopy(flattened_ordered_data_stream))
-                ordered_data_stream.clear()
+                full_data_stream.append(copy.deepcopy(ordered_data_stream))
                 ordered_data_stream = [[0] * 4] * num_of_devices
                 if len(full_data_stream) >= buffer_size:
                     save_data_to_csv(full_data_stream, filename)

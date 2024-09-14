@@ -10,6 +10,10 @@ parse_buf = bytearray(0)
 
 umyo_list = []
 unseen_cnt = []
+sensor_id = 0
+
+def get_uid():
+    return sensor_id
 
 def id2idx(uid):
     cnt = len(umyo_list)
@@ -31,6 +35,7 @@ def id2idx(uid):
     return cnt
 
 def umyo_parse(pos):
+    global sensor_id
     pp = pos
     rssi = parse_buf[pp-1]; #pp is guaranteed to be >0 by design
     packet_id = parse_buf[pp]; pp+=1
@@ -40,6 +45,7 @@ def umyo_parse(pos):
     unit_id += parse_buf[pp]; pp+=1; unit_id <<= 8
     unit_id += parse_buf[pp]; pp+=1
     idx = id2idx(unit_id)
+    sensor_id = unit_id
     packet_type = parse_buf[pp]; pp+=1
     if(packet_type > 80 and packet_type < 120):
         umyo_list[idx].data_count = packet_type - 80;
