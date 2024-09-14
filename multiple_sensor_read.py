@@ -3,6 +3,7 @@ import datetime
 import umyo_parser
 from collections import deque
 import copy
+import numpy as np
 
 buffer_size = 500
 full_data_stream = deque(maxlen=buffer_size)
@@ -44,8 +45,8 @@ def save_data_to_csv(data_deque, filename):
     with open(filename, 'w', newline='') as csvfile:
         csv_write = csv.writer(csvfile)
         for row in data_deque:
-            flattened_row = [item for sublist in row for item in sublist]
-            csv_write.writerow(flattened_row)
+            # flattened_row = [item for sublist in row for item in sublist]
+            csv_write.writerow(row)
         data_deque.clear()
 
 
@@ -85,22 +86,19 @@ try:
             handle_data(umyo_parser.umyo_get_list())
             for index, data_list in enumerate(data_spg):
                 if len(data_list) < 5:
-                    if counter[index] == 1:
-                        ordered_data_stream[index] = data_list
-                    else:
-                        ordered_data_stream[index] = data_list
-                        counter[index] = 1
-
-            sum_counter = 0
-            for n in counter:
-                sum_counter += n
-            if sum_counter == num_of_devices:
+                    ordered_data_stream[index] = data_list
+                    counter[index] = 1
+            if sum(counter) < num_of_devices:
+                continue
+            else:
                 counter.clear()
                 counter = [0] * num_of_devices
                 time_obj = datetime.datetime.now()
                 time_list = [time_obj.hour, time_obj.minute, time_obj.second, time_obj.microsecond]
                 ordered_data_stream.append(time_list)
-                full_data_stream.append(copy.deepcopy(ordered_data_stream))
+                two_dimensional_list = np.array(ordered_data_stream)
+                flattened_ordered_data_stream = two_dimensional_list.flatten()
+                full_data_stream.append(copy.deepcopy(flattened_ordered_data_stream))
                 ordered_data_stream.clear()
                 ordered_data_stream = [[0] * 4] * num_of_devices
                 if len(full_data_stream) >= buffer_size:
