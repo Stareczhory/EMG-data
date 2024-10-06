@@ -1,9 +1,7 @@
 import csv
-import datetime
 import umyo_parser
 from collections import deque
 import copy
-import numpy as np
 import time
 
 buffer_size = 500
