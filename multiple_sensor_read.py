@@ -4,6 +4,7 @@ import umyo_parser
 from collections import deque
 import copy
 import numpy as np
+import time
 
 buffer_size = 500
 full_data_stream = deque(maxlen=buffer_size)
@@ -92,8 +93,8 @@ try:
                 continue  # continue getting packets until values from all sensors are obtained
             else:
                 counter = [0] * num_of_devices
-                time_obj = datetime.datetime.now()
-                time_list = [time_obj.hour, time_obj.minute, time_obj.second, time_obj.microsecond]
+                timestamp = int(time.time() * 1000)
+                time_list = [timestamp]
                 ordered_data_stream.append(time_list)
                 full_data_stream.append(copy.deepcopy(ordered_data_stream))
                 ordered_data_stream = [[0] * 4] * num_of_devices
